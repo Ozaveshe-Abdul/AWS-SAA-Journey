@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -eo pipefail
+
+echo " "
+
+if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
+    echo "❌ Error: Missing required arguments."
+    echo "Usage: $0 <bucket-name> <folder-name> <object-name>"
+    echo " "
+    exit 1
+fi
+
+BUCKET_NAME=$1
+FOLDER_NAME=$2
+OBJECT=$3
+
+echo "moving file from one folder to the next within the same bucket"
+echo "MovING $OBJECT into $FOLDER_NAME"
+
+aws s3api copy-object --bucket $BUCKET_NAME \
+--copy-source $BUCKET_NAME/$OBJECT \
+--key $FOLDER_NAME/$OBJECT 
+
+echo "Moved $OBJECT to $FOLDER_NAME"
+
+echo "Cleaning up"
+
+aws s3api delete-object --bucket $BUCKET_NAME \
+--key $OBJECT
+
+aws s3api list-objects-v2 \
+--bucket $BUCKET_NAME \
+--query "Contents[].{Key: Key, Size: Size}" \
+--output table

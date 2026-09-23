@@ -1,0 +1,70 @@
+#!/bin/bash
+
+set -eo pipefail
+
+if [ -z "$1" ] || [ -z "$2" ]; then
+    echo "❌ Error: Missing required arguments."
+    echo "Usage: $0 <bucket-name> <website-folder-name>"
+    exit 1
+fi
+
+# Ask user if the script should proceed
+read -p "Is this $1 the absolute PATH to the website folder ? (y/N): " response
+
+# Evaluate the response
+case "$response" in
+    [yY][eE][sS]|[yY]) 
+        echo "Proceeding to deploy your static website"
+        ;;
+    *)
+        echo "Only Absolute PATH can be evaluated correctly."
+        echo " "
+	echo "Unless the script is in the same folder/location as the website folder, then start the script again and select y"
+        exit 0
+        ;;
+esac
+
+BUCKET_NAME=$1
+WEBSITE_FOLDER=$2
+
+echo " "
+echo "Moving your website files into $BUCKET_NAME for static hosting"
+
+aws s3 sync "$WEBSITE_FOLDER/" s3://"$BUCKET_NAME/" 
+
+echo " "
+echo "Turning on Static Hosting"
+
+aws s3api put-bucket-website \
+    --bucket $BUCKET_NAME \
+    --website-configuration '{
+        "IndexDocument": {"Suffix": "index.html"}
+    }'
+
+echo " "
+echo "Enabling public Access to the bucket ($BUCKET_NAME)"
+
+aws s3api put-public-access-block \
+    --bucket $BUCKET_NAME \
+    --public-access-block-configuration "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
+
+echo "Allowing and granting Public read Policies..."
+aws s3api put-bucket-policy \
+    --bucket "$BUCKET_NAME" \
+    --policy "{
+        \"Version\": \"2012-10-17\",
+        \"Statement\": [
+            {
+                \"Sid\": \"PublicReadGetObject\",
+                \"Effect\": \"Allow\",
+                \"Principal\": \"*\",
+                \"Action\": \"s3:GetObject\",
+                \"Resource\": \"arn:aws:s3:::$BUCKET_NAME/*\"
+            }
+        ]
+    }"
+
+
+echo " "
+echo "Visit your website at"
+echo "http://$BUCKET_NAME.s3-website.eu-north-1.amazonaws.com"
