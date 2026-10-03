@@ -2,7 +2,7 @@
 
 A collection of lightweight, robust **Bash scripts** built to automate infrastructure deployments and object operations on Amazon S3 using the low-level **AWS CLI `s3api`** and high-level `s3` tools.
 
-🌐 **Live Demo:** [Visit the Hosted Website] (http://ozey-bucket-2.s3-website.eu-north-1.amazonaws.com)
+🌐 **Live Demo:** [Visit the Hosted Website] (http://ozey-bucket.s3-website.eu-north-1.amazonaws.com)
 
 ---
 
