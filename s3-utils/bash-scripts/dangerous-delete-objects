@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -o pipefail
+
+aws s3api list-objects --bucket ozey-bucket-2 --query "Content[].{Key: Key}" --output json
+# 1. Fetch bucket names into a bash array
+objects=($(aws s3api list-objects --bucket ozey-bucket-2 --query "Contents[].Key" --output text))
+
+# 2. Loop through the array and delete each bucket
+for object in "${objects[@]}"; do
+    echo "Deleting object: $object"
+  
+    [ -z "$object" ] && continue
+
+    aws s3api delete-object --bucket ozey-bucket-2 --key "$object"
+done
+
+# 3. Finished deleting objects.
+
+echo "Done! finished deleting objects" 
